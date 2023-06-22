@@ -26,6 +26,7 @@ services:
       GITEA__mailer__HOST: ${SMTP_HOST}
       GITEA__mailer__USER: ${SMTP_USER}
       GITEA__mailer__PASSWD: ${SMTP_PASS}
+      GITEA__webhook__ALLOWED_HOST_LIST: ${WEBHOOK_DOMAIN_WHITELIST}
       USER_UID: ${USER_UID}
       USER_GID: ${USER_GID}
       SSH_PORT: 22
