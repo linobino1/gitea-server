@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  gitea:
+    image: gitea/gitea:latest
+    volumes:
+      - ./gitea:/var/lib/gitea
+      - ./dump:/dump
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - 3000
+      - 22
+    environment:
+      DOMAIN:
+      GITEA__database__DB_TYPE: mysql
+      GITEA__database__HOST: db:3306
+      GITEA__database__NAME: ${DB_NAME}
+      GITEA__database__USER: ${DB_USER}
+      GITEA__database__PASSWD: ${DB_PASS}
+      GITEA__service__DISABLE_REGISTRATION: true
+      GITEA__mailer__ENABLED: true
+      GITEA__mailer__MAILER_TYPE: smtp
+      GITEA__mailer__IS_TLS_ENABLED: false
+      GITEA__mailer__FROM: ${SMTP_FROM}
+      GITEA__mailer__HOST: ${SMTP_HOST}
+      GITEA__mailer__USER: ${SMTP_USER}
+      GITEA__mailer__PASSWD: ${SMTP_PASS}
+      USER_UID: ${USER_UID}
+      USER_GID: ${USER_GID}
+      SSH_PORT: 22
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=public
+      - traefik.constraint-label=public
+      - traefik.http.routers.gitea-http.entrypoints=web
+      - traefik.http.routers.gitea-http.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.gitea-http.middlewares=gitea-https
+      - traefik.http.middlewares.gitea-https.redirectscheme.scheme=https
+      - traefik.http.routers.gitea-https.entrypoints=websecure
+      - traefik.http.routers.gitea-https.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.gitea-https.tls=true
+      - traefik.http.routers.gitea-https.tls.certresolver=letsencrypt
+      - traefik.http.routers.gitea-https.service=gitea
+      - traefik.http.services.gitea.loadbalancer.server.port=3000
+      - traefik.tcp.routers.gitea-ssh.entrypoints=ssh
+      - traefik.tcp.routers.gitea-ssh.rule=HostSNI(`*`)
+      - traefik.tcp.routers.gitea-ssh.service=gitea-ssh-svc
+      - traefik.tcp.services.gitea-ssh-svc.loadbalancer.server.port=22
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: mysql:8
+    restart: always
+    expose:
+      - 3306
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
+    volumes:
+      - ./mysql:/var/lib/mysql
+      - ./dump:/dump
+
+  traefik:
+    image: traefik
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+      - 22:22
+    volumes:
+      - ./letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.ssh.address=:22
+
+      # LetsEncrypt Staging Server - uncomment when testing
+      - --certificatesResolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
+
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.letsencrypt.acme.email=${EMAIL_ADMIN}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      
