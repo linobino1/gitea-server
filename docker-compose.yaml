@@ -34,20 +34,34 @@ services:
       - traefik.enable=true
       - traefik.docker.network=public
       - traefik.constraint-label=public
-      - traefik.http.routers.gitea-http.entrypoints=web
+
+      # HTTP to HTTPS redirect
       - traefik.http.routers.gitea-http.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.gitea-http.entrypoints=web
       - traefik.http.routers.gitea-http.middlewares=gitea-https
       - traefik.http.middlewares.gitea-https.redirectscheme.scheme=https
+
+      # HTTPS
       - traefik.http.routers.gitea-https.entrypoints=websecure
       - traefik.http.routers.gitea-https.rule=Host(`${DOMAIN}`)
       - traefik.http.routers.gitea-https.tls=true
       - traefik.http.routers.gitea-https.tls.certresolver=letsencrypt
       - traefik.http.routers.gitea-https.service=gitea
+
       - traefik.http.services.gitea.loadbalancer.server.port=3000
+
+      # SSH
       - traefik.tcp.routers.gitea-ssh.entrypoints=ssh
       - traefik.tcp.routers.gitea-ssh.rule=HostSNI(`*`)
       - traefik.tcp.routers.gitea-ssh.service=gitea-ssh-svc
       - traefik.tcp.services.gitea-ssh-svc.loadbalancer.server.port=22
+        
+      # IP whitelist
+      - "traefik.http.middlewares.check-ip.ipwhitelist.sourcerange=${IP_WHITELIST}"
+      - traefik.http.routers.gitea-http.middlewares=check-ip
+      - traefik.http.routers.gitea-https.middlewares=check-ip
+      - traefik.http.routers.gitea-ssh.middlewares=check-ip
+
     depends_on:
       - db
     restart: always
