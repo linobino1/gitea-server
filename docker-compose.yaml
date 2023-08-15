@@ -88,8 +88,9 @@ services:
       - 443:443
       - 22:22
     volumes:
-      - ./letsencrypt:/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt:/letsencrypt
+      - ./logs:/logs
     command:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
@@ -104,4 +105,9 @@ services:
       - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
       - --certificatesresolvers.letsencrypt.acme.email=${EMAIL_ADMIN}
       - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      
+      # enable logging
+      - --accesslog=true
+      - --accesslog.filepath=/logs/access.log
+      - --accesslog.bufferingsize=100
       
