@@ -4,7 +4,7 @@ services:
   gitea:
     image: gitea/gitea:latest
     volumes:
-      - ./gitea:/var/lib/gitea
+      - ./gitea:/data
       - ./dump:/dump
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
