@@ -111,6 +111,7 @@ services:
       - --accesslog.bufferingsize=100
       
     labels:
+      - traefik.enable=true
 
       # IP whitelist middlewares
       - "traefik.http.middlewares.check-ip.ipwhitelist.sourcerange=${IP_WHITELIST}"
