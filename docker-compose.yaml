@@ -110,6 +110,8 @@ services:
       - --accesslog.filepath=/logs/access.log
       - --accesslog.bufferingsize=100
       
+    labels:
+
       # IP whitelist middlewares
       - "traefik.http.middlewares.check-ip.ipwhitelist.sourcerange=${IP_WHITELIST}"
       - "traefik.tcp.middlewares.check-ip-tcp.ipwhitelist.sourcerange=${IP_WHITELIST}"
