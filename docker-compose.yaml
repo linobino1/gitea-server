@@ -57,10 +57,9 @@ services:
       - traefik.tcp.services.gitea-ssh-svc.loadbalancer.server.port=22
         
       # IP whitelist
-      - "traefik.http.middlewares.check-ip.ipwhitelist.sourcerange=${IP_WHITELIST}"
       - traefik.http.routers.gitea-http.middlewares=check-ip
       - traefik.http.routers.gitea-https.middlewares=check-ip
-      - traefik.tcp.routers.gitea-ssh.middlewares=check-ip
+      - traefik.tcp.routers.gitea-ssh.middlewares=check-ip-tcp
 
     depends_on:
       - db
@@ -111,5 +110,8 @@ services:
       - --accesslog.filepath=/logs/access.log
       - --accesslog.bufferingsize=100
       
+      # IP whitelist middlewares
+      - "traefik.http.middlewares.check-ip.ipwhitelist.sourcerange=${IP_WHITELIST}"
+      - "traefik.tcp.middlewares.check-ip-tcp.ipwhitelist.sourcerange=${IP_WHITELIST}"
 volumes:
   gitea:
