@@ -60,7 +60,7 @@ services:
       - "traefik.http.middlewares.check-ip.ipwhitelist.sourcerange=${IP_WHITELIST}"
       - traefik.http.routers.gitea-http.middlewares=check-ip
       - traefik.http.routers.gitea-https.middlewares=check-ip
-      - traefik.http.routers.gitea-ssh.middlewares=check-ip
+      - traefik.tcp.routers.gitea-ssh.middlewares=check-ip
 
     depends_on:
       - db
