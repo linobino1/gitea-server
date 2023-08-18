@@ -4,7 +4,7 @@ services:
   gitea:
     image: gitea/gitea:latest
     volumes:
-      - ./gitea:/data
+      - gitea:/var/lib/gitea
       - ./dump:/dump
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
@@ -111,3 +111,5 @@ services:
       - --accesslog.filepath=/logs/access.log
       - --accesslog.bufferingsize=100
       
+volumes:
+  gitea:
