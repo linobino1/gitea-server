@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   gitea:
@@ -27,6 +27,8 @@ services:
       GITEA__mailer__USER: ${SMTP_USER}
       GITEA__mailer__PASSWD: ${SMTP_PASS}
       GITEA__webhook__ALLOWED_HOST_LIST: ${WEBHOOK_DOMAIN_WHITELIST}
+      GITEA__log__ROOT_PATH: /var/log/gitea
+      GITEA__log__logger.access.MODE: ","
       USER_UID: ${USER_UID}
       USER_GID: ${USER_GID}
       SSH_PORT: 22
@@ -55,7 +57,7 @@ services:
       - traefik.tcp.routers.gitea-ssh.rule=HostSNI(`*`)
       - traefik.tcp.routers.gitea-ssh.service=gitea-ssh-svc
       - traefik.tcp.services.gitea-ssh-svc.loadbalancer.server.port=22
-        
+
       # IP whitelist
       - traefik.http.routers.gitea-http.middlewares=check-ip
       - traefik.http.routers.gitea-https.middlewares=check-ip
@@ -104,12 +106,12 @@ services:
       - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
       - --certificatesresolvers.letsencrypt.acme.email=${EMAIL_ADMIN}
       - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
-      
+
       # enable logging
       - --accesslog=true
       - --accesslog.filepath=/logs/access.log
       - --accesslog.bufferingsize=100
-      
+
     labels:
       - traefik.enable=true
 
