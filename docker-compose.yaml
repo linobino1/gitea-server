@@ -10,7 +10,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
     expose:
       - 3000
-      - 22
+      - ${GITEA_SSH_PORT}
     environment:
       DOMAIN:
       GITEA__database__DB_TYPE: mysql
@@ -32,7 +32,7 @@ services:
       GITEA__log__logger.access.MODE: ","
       USER_UID: ${USER_UID}
       USER_GID: ${USER_GID}
-      SSH_PORT: 22
+      SSH_PORT: ${GITEA_SSH_PORT}
     labels:
       - traefik.enable=true
       - traefik.docker.network=public
@@ -57,7 +57,7 @@ services:
       - traefik.tcp.routers.gitea-ssh.entrypoints=ssh
       - traefik.tcp.routers.gitea-ssh.rule=HostSNI(`*`)
       - traefik.tcp.routers.gitea-ssh.service=gitea-ssh-svc
-      - traefik.tcp.services.gitea-ssh-svc.loadbalancer.server.port=22
+      - traefik.tcp.services.gitea-ssh-svc.loadbalancer.server.port=${GITEA_SSH_PORT}
 
       # IP whitelist
       - traefik.http.routers.gitea-http.middlewares=check-ip
@@ -88,7 +88,7 @@ services:
     ports:
       - 80:80
       - 443:443
-      - 22:22
+      - ${GITEA_SSH_PORT}:${GITEA_SSH_PORT}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./letsencrypt:/letsencrypt
@@ -98,7 +98,7 @@ services:
       - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
-      - --entrypoints.ssh.address=:22
+      - --entrypoints.ssh.address=:${GITEA_SSH_PORT}
 
       # LetsEncrypt Staging Server - uncomment when testing
       # - --certificatesResolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
