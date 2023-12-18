@@ -27,6 +27,7 @@ services:
       GITEA__mailer__USER: ${SMTP_USER}
       GITEA__mailer__PASSWD: ${SMTP_PASS}
       GITEA__webhook__ALLOWED_HOST_LIST: ${WEBHOOK_DOMAIN_WHITELIST}
+      GITEA__log__MODE: file
       GITEA__log__ROOT_PATH: /var/log/gitea
       GITEA__log__logger.access.MODE: ","
       USER_UID: ${USER_UID}
