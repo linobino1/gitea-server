@@ -1,8 +1,10 @@
 version: "3.8"
+name: gitea-server
 
 services:
   gitea:
     image: gitea/gitea:1.24.6
+    container_name: gitea
     volumes:
       - gitea:/var/lib/gitea
       - ./dump:/dump
@@ -11,6 +13,8 @@ services:
     expose:
       - 3000
       - ${GITEA_SSH_PORT}
+    networks:
+      - gitea
     environment:
       DOMAIN:
       GITEA__database__DB_TYPE: mysql
@@ -70,11 +74,15 @@ services:
     depends_on:
       - gitea
       - db
+    networks:
+      - gitea
     environment:
+      CONFIG_FILE: /config.yaml
       GITEA_INSTANCE_URL: "http://gitea:3000"
       GITEA_RUNNER_NAME: runner-1
       GITEA_RUNNER_REGISTRATION_TOKEN: "${RUNNER_REGISTRATION_TOKEN}"
     volumes:
+      - ./runner-config.yaml:/config.yaml
       - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -83,6 +91,8 @@ services:
     restart: always
     expose:
       - 3306
+    networks:
+      - gitea
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
       MYSQL_USER: ${DB_USER}
@@ -99,6 +109,8 @@ services:
       - 80:80
       - 443:443
       - ${GITEA_SSH_PORT}:${GITEA_SSH_PORT}
+    networks:
+      - gitea
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./letsencrypt:/letsencrypt
@@ -130,4 +142,7 @@ services:
       - "traefik.http.middlewares.check-ip.ipwhitelist.sourcerange=${IP_WHITELIST}"
       - "traefik.tcp.middlewares.check-ip-tcp.ipwhitelist.sourcerange=${IP_WHITELIST}"
 volumes:
+  gitea:
+
+networks:
   gitea:
