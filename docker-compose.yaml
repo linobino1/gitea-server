@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   gitea:
-    image: gitea/gitea:1.20
+    image: gitea/gitea:1.24.6
     volumes:
       - gitea:/var/lib/gitea
       - ./dump:/dump
