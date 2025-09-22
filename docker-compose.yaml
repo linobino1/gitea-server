@@ -65,6 +65,19 @@ services:
       - db
     restart: always
 
+  runner:
+    image: gitea/act_runner
+    depends_on:
+      - gitea
+      - db
+    environment:
+      GITEA_INSTANCE_URL: "http://gitea:3000"
+      GITEA_RUNNER_NAME: runner-1
+      GITEA_RUNNER_REGISTRATION_TOKEN: "${RUNNER_REGISTRATION_TOKEN}"
+    volumes:
+      - ./data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+
   db:
     image: mysql:8
     restart: always
