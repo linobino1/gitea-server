@@ -1,0 +1,26 @@
+x-allowed-ips: &allowed-ips
+  - 172.18.0.1/16 # Docker default bridge network
+  - 192.168.121.0/24 # local network
+  - 10.0.0.0/8 # local network
+  - 81.27.115.118/32 # company IP
+  - 80.151.133.22/32 # company IP
+  - 91.98.165.27/32 # gitea arm64 runner
+  - 94.130.231.121/32 # webserver automation-base.com (old)
+  - 91.98.139.60/32 # webserver automation-base.com
+  - 5.161.255.8 # webserver plc-mall.com (old)
+  - 178.156.129.159/32 # webserver plc-mall.com (new)
+  - 2.28.60.113/32 # k3s-node-1
+  - 157.90.172.118/32 # webserver sps-markt.de
+  - 91.99.195.148/32 # webserver plc-index.de
+
+http:
+  middlewares:
+    gitea-ipwhitelist:
+      ipWhiteList:
+        sourceRange: *allowed-ips
+
+tcp:
+  middlewares:
+    gitea-tcp-ipwhitelist:
+      ipWhiteList:
+        sourceRange: *allowed-ips

@@ -61,9 +61,9 @@ services:
       - traefik.tcp.services.gitea-ssh-svc.loadbalancer.server.port=${GITEA_SSH_PORT}
 
       # IP whitelist
-      - traefik.http.routers.gitea-http.middlewares=check-ip
-      - traefik.http.routers.gitea-https.middlewares=check-ip
-      - traefik.tcp.routers.gitea-ssh.middlewares=check-ip-tcp
+      - traefik.http.routers.gitea-http.middlewares=gitea-ipwhitelist@file
+      - traefik.http.routers.gitea-https.middlewares=gitea-ipwhitelist@file
+      - traefik.tcp.routers.gitea-ssh.middlewares=gitea-tcp-ipwhitelist@file
 
     depends_on:
       - db
@@ -125,6 +125,9 @@ services:
     command:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true # Auto-reload on changes
+
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
       - --entrypoints.ssh.address=:${GITEA_SSH_PORT}
@@ -144,9 +147,6 @@ services:
     labels:
       - traefik.enable=true
 
-      # IP whitelist middlewares
-      - "traefik.http.middlewares.check-ip.ipwhitelist.sourcerange=${IP_WHITELIST}"
-      - "traefik.tcp.middlewares.check-ip-tcp.ipwhitelist.sourcerange=${IP_WHITELIST}"
 volumes:
   gitea:
 
