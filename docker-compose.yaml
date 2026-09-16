@@ -3,7 +3,7 @@ name: gitea-server
 
 services:
   gitea:
-    image: gitea/gitea:1.24.6
+    image: gitea/gitea:1.25
     container_name: gitea
     volumes:
       - gitea:/var/lib/gitea
