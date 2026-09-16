@@ -121,8 +121,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./letsencrypt:/letsencrypt
-      - ./traefik.yml:/etc/traefik/dynamic/traefik-dynamic.yml:ro
-
+      - ./traefik.yaml:/etc/traefik/dynamic/traefik-dynamic.yml:ro
     command:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
