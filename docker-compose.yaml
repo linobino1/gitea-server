@@ -106,6 +106,11 @@ services:
   traefik:
     image: traefik
     restart: always
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"
     ports:
       - 80:80
       - 443:443
@@ -115,7 +120,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./letsencrypt:/letsencrypt
-      - ./logs:/logs
+      - ./traefik.yml:/etc/traefik/dynamic/traefik-dynamic.yml:ro
+
     command:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
@@ -131,9 +137,8 @@ services:
       - --certificatesresolvers.letsencrypt.acme.email=${EMAIL_ADMIN}
       - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
 
-      # enable logging
+      # Enable logging to stdout for Docker-managed rotation.
       - --accesslog=true
-      - --accesslog.filepath=/logs/access.log
       - --accesslog.bufferingsize=100
 
     labels:
