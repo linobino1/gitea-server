@@ -104,7 +104,8 @@ services:
       - ./dump:/dump
 
   traefik:
-    image: traefik
+    container_name: traefik
+    image: traefik:3.6
     restart: always
     logging:
       driver: local
