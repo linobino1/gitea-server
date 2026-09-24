@@ -144,6 +144,8 @@ services:
       - --accesslog=true
       - --accesslog.bufferingsize=100
 
+      # increase the default timeout from 60s to 600s to allow big BLOB uploads to the gitea package registry
+      - --entrypoints.websecure.transport.respondingtimeouts.readtimeout=600s
     labels:
       - traefik.enable=true
 
