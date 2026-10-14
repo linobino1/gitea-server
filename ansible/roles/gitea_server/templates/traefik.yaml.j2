@@ -1,0 +1,22 @@
+---
+x-allowed-ips: &allowed-ips
+{% for ip in gitea_ip_whitelist %}
+  - {{ ip }}
+{% endfor %}
+
+http:
+  middlewares:
+    gitea-ipwhitelist:
+      ipWhiteList:
+        sourceRange: *allowed-ips
+
+tcp:
+  middlewares:
+    gitea-tcp-ipwhitelist:
+      ipWhiteList:
+        sourceRange: *allowed-ips
+
+log:
+  level: DEBUG
+
+accessLog: {}

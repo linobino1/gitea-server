@@ -1,0 +1,12 @@
+---
+gitea_deploy_dir: /opt/gitea-server
+gitea_compose_project: gitea-server
+gitea_image: gitea/gitea:1.25
+gitea_runner_image: gitea/act_runner
+gitea_db_image: mysql:8
+gitea_traefik_image: traefik:3.6
+gitea_runner_name: runner-1
+gitea_runner_config_source: runner-config.yaml
+gitea_docker_packages:
+  - docker.io
+  - docker-compose-plugin

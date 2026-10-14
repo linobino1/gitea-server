@@ -1,0 +1,8 @@
+---
+- name: Reconcile Gitea project
+  community.docker.docker_compose_v2:
+    project_src: "{{ gitea_deploy_dir }}"
+    project_name: "{{ gitea_compose_project }}"
+    state: present
+    pull: missing
+  when: not ansible_check_mode

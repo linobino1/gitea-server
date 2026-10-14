@@ -1,22 +1,21 @@
-version: "3.8"
-name: gitea-server
+---
+name: {{ gitea_compose_project }}
 
 services:
   gitea:
-    image: gitea/gitea:1.25
+    image: {{ gitea_image }}
     container_name: gitea
     volumes:
-      - gitea:/var/lib/gitea
+      - gitea:/data
       - ./dump:/dump
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     expose:
       - 3000
       - ${GITEA_SSH_PORT}
-    networks:
-      - gitea
+    networks: [gitea]
     environment:
-      DOMAIN:
+      DOMAIN: ${DOMAIN}
       GITEA__database__DB_TYPE: mysql
       GITEA__database__HOST: db:3306
       GITEA__database__NAME: ${DB_NAME}
@@ -38,49 +37,34 @@ services:
       - traefik.enable=true
       - traefik.docker.network=public
       - traefik.constraint-label=public
-
-      # HTTP to HTTPS redirect
       - traefik.http.routers.gitea-http.rule=Host(`${DOMAIN}`)
       - traefik.http.routers.gitea-http.entrypoints=web
-      - traefik.http.routers.gitea-http.middlewares=gitea-https
       - traefik.http.middlewares.gitea-https.redirectscheme.scheme=https
-
-      # HTTPS
+      - traefik.http.routers.gitea-http.middlewares=gitea-ipwhitelist@file,gitea-https
       - traefik.http.routers.gitea-https.entrypoints=websecure
       - traefik.http.routers.gitea-https.rule=Host(`${DOMAIN}`)
       - traefik.http.routers.gitea-https.tls=true
       - traefik.http.routers.gitea-https.tls.certresolver=letsencrypt
+      - traefik.http.routers.gitea-https.middlewares=gitea-ipwhitelist@file
       - traefik.http.routers.gitea-https.service=gitea
-
       - traefik.http.services.gitea.loadbalancer.server.port=3000
-
-      # SSH
       - traefik.tcp.routers.gitea-ssh.entrypoints=ssh
       - traefik.tcp.routers.gitea-ssh.rule=HostSNI(`*`)
       - traefik.tcp.routers.gitea-ssh.service=gitea-ssh-svc
-      - traefik.tcp.services.gitea-ssh-svc.loadbalancer.server.port=${GITEA_SSH_PORT}
-
-      # IP whitelist
-      - traefik.http.routers.gitea-http.middlewares=gitea-ipwhitelist@file
-      - traefik.http.routers.gitea-https.middlewares=gitea-ipwhitelist@file
       - traefik.tcp.routers.gitea-ssh.middlewares=gitea-tcp-ipwhitelist@file
-
-    depends_on:
-      - db
+      - traefik.tcp.services.gitea-ssh-svc.loadbalancer.server.port=${GITEA_SSH_PORT}
+    depends_on: [db]
     restart: always
 
   runner:
-    image: gitea/act_runner
-    depends_on:
-      - gitea
-      - db
-    networks:
-      - gitea
+    image: {{ gitea_runner_image }}
+    depends_on: [gitea, db]
+    networks: [gitea]
     environment:
       CONFIG_FILE: /config.yaml
-      GITEA_INSTANCE_URL: "http://gitea:3000"
-      GITEA_RUNNER_NAME: runner-1
-      GITEA_RUNNER_REGISTRATION_TOKEN: "${RUNNER_REGISTRATION_TOKEN}"
+      GITEA_INSTANCE_URL: http://gitea:3000
+      GITEA_RUNNER_NAME: {{ gitea_runner_name }}
+      GITEA_RUNNER_REGISTRATION_TOKEN: ${RUNNER_REGISTRATION_TOKEN}
     volumes:
       - ./runner-config.yaml:/config.yaml
       - ./data:/data
@@ -88,12 +72,10 @@ services:
     restart: always
 
   db:
-    image: mysql:8
+    image: {{ gitea_db_image }}
     restart: always
-    expose:
-      - 3306
-    networks:
-      - gitea
+    expose: [3306]
+    networks: [gitea]
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
       MYSQL_USER: ${DB_USER}
@@ -105,19 +87,18 @@ services:
 
   traefik:
     container_name: traefik
-    image: traefik:3.6
+    image: {{ gitea_traefik_image }}
     restart: always
     logging:
       driver: local
       options:
         max-size: 10m
-        max-file: "3"
+        max-file: '3'
     ports:
       - 80:80
       - 443:443
       - ${GITEA_SSH_PORT}:${GITEA_SSH_PORT}
-    networks:
-      - gitea
+    networks: [gitea]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./letsencrypt:/letsencrypt
@@ -126,25 +107,16 @@ services:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
       - --providers.file.directory=/etc/traefik/dynamic
-      - --providers.file.watch=true # Auto-reload on changes
-
+      - --providers.file.watch=true
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
       - --entrypoints.ssh.address=:${GITEA_SSH_PORT}
-
-      # LetsEncrypt Staging Server - uncomment when testing
-      # - --certificatesResolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
-
       - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
       - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
-      - --certificatesresolvers.letsencrypt.acme.email=${EMAIL_ADMIN}
+      - --certificatesresolvers.letsencrypt.acme.email=${LETSENCRYPT_EMAIL}
       - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
-
-      # Enable logging to stdout for Docker-managed rotation.
       - --accesslog=true
       - --accesslog.bufferingsize=100
-
-      # increase the default timeout from 60s to 600s to allow big BLOB uploads to the gitea package registry
       - --entrypoints.websecure.transport.respondingtimeouts.readtimeout=600s
     labels:
       - traefik.enable=true

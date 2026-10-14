@@ -1,0 +1,81 @@
+---
+- name: Check for Docker
+  ansible.builtin.shell: command -v docker
+  register: gitea_docker_binary
+  changed_when: false
+  failed_when: false
+
+- name: Install Docker packages when Docker is absent
+  ansible.builtin.apt:
+    name: "{{ gitea_docker_packages }}"
+    state: present
+    update_cache: true
+  when: gitea_docker_binary.rc != 0
+
+- name: Enable Docker
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Create deployment directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - "{{ gitea_deploy_dir }}"
+    - "{{ gitea_deploy_dir }}/dump"
+    - "{{ gitea_deploy_dir }}/data"
+    - "{{ gitea_deploy_dir }}/mysql"
+    - "{{ gitea_deploy_dir }}/letsencrypt"
+
+- name: Create ACME storage file
+  ansible.builtin.file:
+    path: "{{ gitea_deploy_dir }}/letsencrypt/acme.json"
+    state: touch
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Render Compose environment
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ gitea_deploy_dir }}/.env"
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+  notify: Reconcile Gitea project
+
+- name: Render Compose project
+  ansible.builtin.template:
+    src: docker-compose.yaml.j2
+    dest: "{{ gitea_deploy_dir }}/docker-compose.yaml"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reconcile Gitea project
+
+- name: Render Traefik dynamic configuration
+  ansible.builtin.template:
+    src: traefik.yaml.j2
+    dest: "{{ gitea_deploy_dir }}/traefik.yaml"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reconcile Gitea project
+
+- name: Install runner configuration
+  ansible.builtin.copy:
+    src: "{{ gitea_runner_config_source }}"
+    dest: "{{ gitea_deploy_dir }}/runner-config.yaml"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reconcile Gitea project
+
+- name: Apply the Compose project
+  ansible.builtin.meta: flush_handlers
